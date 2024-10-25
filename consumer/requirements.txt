@@ -1,0 +1,10 @@
+Flask
+paddleocr
+google-cloud-storage
+google-cloud-bigquery
+kafka-python
+minio
+statsmodels
+pandas
+flask-cors
+numpy
