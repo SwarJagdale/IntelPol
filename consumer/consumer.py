@@ -20,7 +20,7 @@ minio_client = Minio(
 consumer = KafkaConsumer(
     'file_uploaded',
     bootstrap_servers=['kafka:9092'],
-    auto_offset_reset='latest',  # 'earliest' to read from start, 'latest' for new messages
+    auto_offset_reset='earliest',  # 'earliest' to read from start, 'latest' for new messages
     enable_auto_commit=False,     # Set to False to manually commit
     group_id='file-processing-group'  # Use a consistent group ID
 )

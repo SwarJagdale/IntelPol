@@ -65,7 +65,7 @@ services:
       - kafka
     environment:
       - KAFKA_BROKER=kafka:9092
-    # entrypoint: ["/wait-for-it.sh", "kafka:9092", "--timeout=30", "--", "python", "consumer.py"]
+    entrypoint: [ "python", "-u", "consumer.py"]
   
     
 
