@@ -26,6 +26,8 @@ RUN pip install -r requirements.txt
 
 # Copy the rest of the application code into the container
 COPY app /app/app
+COPY wait-for-it.sh /wait-for-it.sh
+RUN chmod +x /wait-for-it.sh
 
 # Expose port 8000 for Flask to listen on
 EXPOSE 8000

@@ -1,15 +1,12 @@
+print("Consumer started")
 import os
 import pandas as pd
-# from flask import Flask, request, jsonify
 from minio import Minio
-from kafka import KafkaProducer, KafkaConsumer
+from kafka import KafkaConsumer
 import json
-# from flask_cors import CORS
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import col
+import time
 
-# app = Flask(__name__)
-# CORS(app, resources={r"/*": {"origins": "*"}})
+time.sleep(5)
 
 # MinIO client setup
 minio_client = Minio(
@@ -17,56 +14,25 @@ minio_client = Minio(
     access_key="minioadmin",
     secret_key="minioadmin",
     secure=False
-   
 )
-
-bucket_name = 'csv-uploads'
-if not minio_client.bucket_exists(bucket_name):
-    minio_client.make_bucket(bucket_name)
-
-print("MinIO client initialized.")
 
 # Kafka Consumer setup
 consumer = KafkaConsumer(
     'file_uploaded',
     bootstrap_servers=['kafka:9092'],
-    auto_offset_reset='earliest',
-    enable_auto_commit=True,
-     group_id='file-processing-group'
-    
+    auto_offset_reset='latest',  # 'earliest' to read from start, 'latest' for new messages
+    enable_auto_commit=False,     # Set to False to manually commit
+    group_id='file-processing-group'  # Use a consistent group ID
 )
-
-print(consumer.topics)
-
-# Kafka Producer setup
-# producer = KafkaProducer(
-#     bootstrap_servers=['localhost:9092'],
-#     value_serializer=lambda x: json.dumps(x).encode('utf-8')
-# )
-
-# def process_file(file_id, filename):
-#     response = minio_client.get_object('uploads', filename)
-#     spark = SparkSession.builder.appName("FileProcessor").getOrCreate()
-#     df = spark.read.csv(response, header=True, inferSchema=True)
-#     df = df.withColumn('forecast', col('data_column') * 1.05)
-#     result_file = f"tmp/{file_id}_result.csv"
-#     df.write.csv(result_file, header=True)
-#     spark.stop()
-#     minio_client.fput_object('processed', result_file, result_file)
-#     producer.send('data_processed', {
-#         'file_id': file_id,
-#         'result_file': result_file,
-#         'status': 'Processed Successfully'
-#     })
-#     producer.flush()
+print('Consumer initialized')
 
 try:
     for message in consumer:
         print("Received message")
-        file_data = json.loads(message.value)  # Deserialize message
-        file_id = file_data['file_id']
-        filename = file_data['filename']
-        print(f"Processing file: {filename}")
-        # process_file(file_id, filename)
+        print(f"{message.key}: {message.value.decode('utf-8')}")
+        # Process the message here as needed
+
+        # Manually commit the offset after processing the message
+        consumer.commit()
 except Exception as e:
     print(f"Error: {e}")
