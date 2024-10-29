@@ -6,3 +6,5 @@ pandas
 flask-cors
 numpy
 # pyspark
+psycopg2-binary
+google-cloud-bigquery

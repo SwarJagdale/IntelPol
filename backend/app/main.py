@@ -4,43 +4,38 @@ from flask import Flask, request, jsonify
 from minio import Minio
 from minio.error import S3Error
 from kafka import KafkaProducer
-
+import io
 import json
 from flask_cors import CORS
 import uuid
 from prometheus_flask_exporter import PrometheusMetrics
 from datetime import datetime
+
 app = Flask(__name__)
 CORS(app)
+
 # Initialize MinIO client
 minio_client = Minio(
-    "minio:9000",  # Your MinIO endpoint (localhost for local, otherwise your MinIO server address)
-    access_key="minioadmin",  # Your MinIO access key
-    secret_key="minioadmin",  # Your MinIO secret key
-    secure=False  # Set to True if using HTTPS
+    "minio:9000",
+    access_key="minioadmin",
+    secret_key="minioadmin",
+    secure=False
 )
 
-bucket_name = 'csv-uploads'  # MinIO bucket name
-print(minio_client.bucket_exists(bucket_name))
-# Create the bucket if it doesn't exist
+bucket_name = 'csv-uploads'
 if not minio_client.bucket_exists(bucket_name):
     minio_client.make_bucket(bucket_name)
-
-print("MinIO client initialized.")
 
 # Initialize Kafka Producer
 producer = KafkaProducer(
     bootstrap_servers='kafka:9092',
-
     max_request_size=1200000000,
-    retries=5,  # Increase the number of retries
-    request_timeout_ms=30000  # Timeout for waiting for an ack (30 seconds)
+    retries=5,
+    request_timeout_ms=30000
 )
 
-
-print(102)
-
 metrics = PrometheusMetrics(app)
+
 @metrics.counter('requests_total', 'Total number of requests')
 def count_requests():
     return 1
@@ -48,6 +43,26 @@ def count_requests():
 @app.before_request
 def before_request():
     count_requests()
+
+# Define the expected columns
+EXPECTED_COLUMNS = [
+    'Area', 'Rpt Dist No', 'Part 1-2', 'Crm Cd', 'Vict Age',
+    'Premis Cd', 'Weapon Used Cd', 'Crm Cd 1', 'Crm Cd 2', 'Lat', 'Lon'
+]
+
+def validate_csv_structure(df):
+    # Check if all expected columns are present
+    if not all(col in df.columns for col in EXPECTED_COLUMNS):
+        return False, f"Missing columns: {', '.join([col for col in EXPECTED_COLUMNS if col not in df.columns])}"
+    
+    # Optional: Add further validation for column types if needed
+    # Example: Ensure 'Vict Age' is of type int
+    if not pd.api.types.is_integer_dtype(df['Vict Age']):
+        return False, "'Vict Age' must be of integer type."
+    
+    # Add more type checks as needed...
+
+    return True, ""
 
 @app.route('/upload', methods=['POST'])
 def upload_file():
@@ -58,7 +73,7 @@ def upload_file():
 
     file = request.files['file']
     print("File received:", file.filename)
-    
+
     if file.filename == '':
         print("No selected file.")
         return jsonify({"message": "No selected file."}), 400
@@ -69,11 +84,18 @@ def upload_file():
         print("Generated filename:", filename)
 
         try:
+            # Read the file content to ensure it's not empty
+            file_content = file.read()
+            if not file_content:
+                print("Empty file content.")
+                return jsonify({"message": "The file is empty."}), 400
+
+            # Upload to MinIO
             minio_client.put_object(
                 bucket_name,
                 filename,
-                file.stream,
-                length=file.content_length,
+                data=io.BytesIO(file_content),  # Use BytesIO to ensure correct stream format
+                length=len(file_content),
                 part_size=10*1024*1024,
                 content_type=file.content_type
             )
@@ -81,12 +103,6 @@ def upload_file():
         except S3Error as e:
             print(f"MinIO upload error: {e}")
             return jsonify({"message": f"Failed to upload to MinIO: {str(e)}"}), 500
-
-        file.seek(0)
-        if file.content_type == 'text/csv':
-            df = pd.read_csv(file)
-        elif file.content_type == 'application/vnd.ms-excel':
-            df = pd.read_csv(file)
 
         print("Publishing to Kafka...")
         time = datetime.now().isoformat()
@@ -103,11 +119,9 @@ def upload_file():
         print("Invalid file type.")
         return jsonify({"message": "Invalid file type. Only CSV and Excel files are allowed."}), 400
 
-
-
 @app.route('/')
 def home():
     return "CSV Prediction Service is running!"
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000,debug=True)
+    app.run(host='0.0.0.0', port=8000, debug=True)

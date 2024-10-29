@@ -9,8 +9,6 @@ services:
     depends_on:
       - backend
 
-
-
   kafka:
     image: wurstmeister/kafka
     ports:
@@ -42,6 +40,7 @@ services:
     ports:
       - "9000:9000"
       - "9001:9001"
+
   backend:
     build:
       context: ./backend
@@ -56,7 +55,6 @@ services:
       - MINIO_SECRET_KEY=minioadmin
     entrypoint: ["/wait-for-it.sh", "kafka:9092", "--", "python", "app/main.py"]
 
-
   consumer:
     build:
       context: ./consumer
@@ -65,34 +63,10 @@ services:
       - kafka
     environment:
       - KAFKA_BROKER=kafka:9092
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/consumer/drilldown-439515-062f7705dec7.json
     entrypoint: [ "python", "-u", "consumer.py"]
-  
-    
+    volumes:
+      - ./consumer/drilldown-439515-062f7705dec7.json:/app/consumer/drilldown-439515-062f7705dec7.json
 
-  # logstash:
-  #   image: logstash:7.9.0
-  #   ports:
-  #     - "5044:5044"
-  #   volumes:
-  #     - ./logstash.conf:/usr/share/logstash/pipeline/logstash.conf
-  #   environment:
-  #     LS_JAVA_OPTS: "-Xmx256m -Xms256m"
-
-  # elasticsearch:
-  #   image: docker.elastic.co/elasticsearch/elasticsearch:7.9.0
-  #   environment:
-  #     - discovery.type=single-node
-  #   ports:
-  #     - "9200:9200"
-
-  # kibana:
-  #   image: docker.elastic.co/kibana/kibana:7.9.0
-  #   ports:
-  #     - "5601:5601"
-  # filebeat:
-  #     image: docker.elastic.co/beats/filebeat:7.10.1
-  #     volumes:
-  #       - /var/lib/docker/containers:/var/lib/docker/containers:ro
-  #       - ./elk/filebeat.yml:/usr/share/filebeat/filebeat.yml
-  #     depends_on:
-  #       - logstash
+volumes:
+  pgdata:
