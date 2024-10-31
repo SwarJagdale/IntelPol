@@ -46,8 +46,11 @@ def before_request():
 
 # Define the expected columns
 EXPECTED_COLUMNS = [
-    'Area', 'Rpt Dist No', 'Part 1-2', 'Crm Cd', 'Vict Age',
-    'Premis Cd', 'Weapon Used Cd', 'Crm Cd 1', 'Crm Cd 2', 'Lat', 'Lon'
+    "Date Rptd", "Date Occ", "Time Occ", "Area", "Area Name", "Rpt Dist No",
+    "Part 1-2", "Crm Cd", "Crm Cd Desc", "Mo Codes", "Vict Age", "Vict Sex",
+    "Vict Descent", "Premis Cd", "Premis Desc", "Weapon Used Cd", "Weapon Desc",
+    "Status", "Status Desc", "Crm Cd 1", "Crm Cd 2", "Location", "Cross Street",
+    "Lat", "Lon"
 ]
 
 def validate_csv_structure(df):
