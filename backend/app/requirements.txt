@@ -9,3 +9,8 @@ pandas
 flask-cors
 # numpy
 prometheus_flask_exporter
+minio
+flask-cors
+prometheus-flask-exporter
+six
+
