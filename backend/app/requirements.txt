@@ -1,16 +1,12 @@
 Flask
-# paddleocr
-# google-cloud-storage
-# google-cloud-bigquery
 kafka-python
 minio
-# statsmodels
 pandas
 flask-cors
-# numpy
 prometheus_flask_exporter
-minio
-flask-cors
-prometheus-flask-exporter
 six
-
+uuid
+google-cloud-bigquery
+joblib
+# pickle
+# BytesIO

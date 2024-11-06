@@ -71,8 +71,6 @@
 # volumes:
 #   pgdata:
 
-version: '3.8'
-
 services:
   frontend:
     build:
@@ -155,6 +153,12 @@ services:
     ports:
       - "8080:8080"
 
+  incremental_upload:
+    build:
+      context: ./incremental_uploads
+    depends_on:
+      - minio
+
   postgres:
     image: postgres:13
     environment:
@@ -163,4 +167,3 @@ services:
       - POSTGRES_DB=airflow
     ports:
       - "5432:5432"
-
