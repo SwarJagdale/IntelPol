@@ -125,6 +125,12 @@ def upload_file():
 model_bucket_name = 'models'
 if not minio_client.bucket_exists(model_bucket_name):
     minio_client.make_bucket(model_bucket_name)
+    #upload arima_model.pkl to this as ARIMA_MODEL_LATEST 
+    try:
+        minio_client.fput_object(model_bucket_name, "ARIMA_MODEL_LATEST", "arima_model.pkl")
+        print(f"Model uploaded successfully as ARIMA_MODEL_LATEST.")
+    except S3Error as e:
+        print(f"Error uploading model: {e}")
 
 def save_model_to_minio(model, model_name="ARIMA_MODEL_LATEST"):
     """Save a pickled model to MinIO"""
@@ -151,13 +157,13 @@ def save_model_to_minio(model, model_name="ARIMA_MODEL_LATEST"):
 def forecast():
     """Endpoint to perform forecasting using the latest ARIMA model."""
     try:
-        model_data = minio_client.get_object(bucket_name, "ARIMA_MODEL_LATEST")
+        model_data = minio_client.get_object(model_bucket_name, "ARIMA_MODEL_LATEST")
         model = pickle.load(BytesIO(model_data.read()))
         
         # Assuming data needed for forecasting is sent in the request body
         request_data = request.get_json()
         future_steps = request_data.get("future_steps", 10)  # Default to 10 steps if not provided
-        
+        print(model)
         # Perform forecasting (assuming model has a forecast method)
         forecasted_values = model.forecast(steps=future_steps)
         
