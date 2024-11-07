@@ -157,17 +157,33 @@ def save_model_to_minio(model, model_name="ARIMA_MODEL_LATEST"):
 def forecast():
     """Endpoint to perform forecasting using the latest ARIMA model."""
     try:
+        # Load the ARIMA model from MinIO
         model_data = minio_client.get_object(model_bucket_name, "ARIMA_MODEL_LATEST")
         model = pickle.load(BytesIO(model_data.read()))
         
-        # Assuming data needed for forecasting is sent in the request body
+        # If no history is provided, use the fitted values (in-sample predictions)
         request_data = request.get_json()
-        future_steps = request_data.get("future_steps", 10)  # Default to 10 steps if not provided
-        print(model)
-        # Perform forecasting (assuming model has a forecast method)
-        forecasted_values = model.forecast(steps=future_steps)
+        history = request_data.get("history")  # History sent by the user
         
-        return jsonify({"forecast": forecasted_values.tolist()}), 200
+        # If no history is provided in the request, use the fitted values from the model
+        if not history:
+            history = model.fittedvalues.tolist()  # Get the fitted values from the model
+        
+        future_steps = request_data.get("future_steps", 10)  # Default to 10 steps if not provided
+
+        # Perform forecasting using the ARIMA model
+        forecasted_values = model.forecast(steps=future_steps)
+
+        # Combine the history (fitted values) with the forecasted values
+        complete_data = history + forecasted_values.tolist()
+
+        # Return both the historical data and the forecasted values
+        return jsonify({
+            "history": history,
+            "forecast": forecasted_values.tolist(),
+            "complete_curve": complete_data  # Combined history and forecast
+        }), 200
+
     except S3Error as e:
         return jsonify({"message": f"Failed to load model: {str(e)}"}), 500
     except Exception as e:
