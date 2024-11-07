@@ -10,6 +10,8 @@ from flask_cors import CORS
 import uuid
 from prometheus_flask_exporter import PrometheusMetrics
 from datetime import datetime
+import pickle
+from io import BytesIO
 
 app = Flask(__name__)
 CORS(app)
@@ -46,11 +48,8 @@ def before_request():
 
 # Define the expected columns
 EXPECTED_COLUMNS = [
-    "Date Rptd", "Date Occ", "Time Occ", "Area", "Area Name", "Rpt Dist No",
-    "Part 1-2", "Crm Cd", "Crm Cd Desc", "Mo Codes", "Vict Age", "Vict Sex",
-    "Vict Descent", "Premis Cd", "Premis Desc", "Weapon Used Cd", "Weapon Desc",
-    "Status", "Status Desc", "Crm Cd 1", "Crm Cd 2", "Location", "Cross Street",
-    "Lat", "Lon"
+    'Area', 'Rpt Dist No', 'Part 1-2', 'Crm Cd', 'Vict Age',
+    'Premis Cd', 'Weapon Used Cd', 'Crm Cd 1', 'Crm Cd 2', 'Lat', 'Lon'
 ]
 
 def validate_csv_structure(df):
@@ -121,7 +120,73 @@ def upload_file():
     else:
         print("Invalid file type.")
         return jsonify({"message": "Invalid file type. Only CSV and Excel files are allowed."}), 400
+    
+    
+model_bucket_name = 'models'
+if not minio_client.bucket_exists(model_bucket_name):
+    minio_client.make_bucket(model_bucket_name)
+    #upload arima_model.pkl to this as ARIMA_MODEL_LATEST 
+    try:
+        minio_client.fput_object(model_bucket_name, "ARIMA_MODEL_LATEST", "arima_model.pkl")
+        print(f"Model uploaded successfully as ARIMA_MODEL_LATEST.")
+    except S3Error as e:
+        print(f"Error uploading model: {e}")
 
+def save_model_to_minio(model, model_name="ARIMA_MODEL_LATEST"):
+    """Save a pickled model to MinIO"""
+    try:
+        # Serialize model to bytes
+        model_bytes = BytesIO()
+        pickle.dump(model, model_bytes)
+        model_bytes.seek(0)  # Reset buffer pointer to beginning
+        
+        # Upload to MinIO
+        minio_client.put_object(
+            model_bucket_name,
+            model_name,
+            data=model_bytes,
+            length=model_bytes.getbuffer().nbytes,
+            content_type="application/octet-stream"
+        )
+        print(f"Model '{model_name}' uploaded to MinIO successfully.")
+    except S3Error as e:
+        print(f"Failed to upload model to MinIO: {e}")
+        raise e
+@app.route('/forecast', methods=['POST'])
+def forecast():
+    """Endpoint to perform forecasting using the latest ARIMA model."""
+    try:
+        # Load the ARIMA model from MinIO
+        model_data = minio_client.get_object(model_bucket_name, "ARIMA_MODEL_LATEST")
+        model = pickle.load(BytesIO(model_data.read()))
+        
+        # If no history is provided, use the fitted values (in-sample predictions)
+        request_data = request.get_json()
+        history = request_data.get("history")  # History sent by the user
+        
+        # If no history is provided in the request, use the fitted values from the model
+        if not history:
+            history = model.fittedvalues.tolist()  # Get the fitted values from the model
+        
+        future_steps = request_data.get("future_steps", 10)  # Default to 10 steps if not provided
+
+        # Perform forecasting using the ARIMA model
+        forecasted_values = model.forecast(steps=future_steps)
+
+        # Combine the history (fitted values) with the forecasted values
+        complete_data = history + forecasted_values.tolist()
+
+        # Return both the historical data and the forecasted values
+        return jsonify({
+            "history": history,
+            "forecast": forecasted_values.tolist(),
+            "complete_curve": complete_data  # Combined history and forecast
+        }), 200
+
+    except S3Error as e:
+        return jsonify({"message": f"Failed to load model: {str(e)}"}), 500
+    except Exception as e:
+        return jsonify({"message": f"Forecasting error: {str(e)}"}), 500
 @app.route('/')
 def home():
     return "CSV Prediction Service is running!"

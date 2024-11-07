@@ -67,6 +67,37 @@ services:
     entrypoint: [ "python", "-u", "consumer.py"]
     volumes:
       - ./consumer/drilldown-439515-062f7705dec7.json:/app/consumer/drilldown-439515-062f7705dec7.json
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    depends_on:
+      - backend
+      - consumer
+      - kafka
+      - minio
 
+  grafana:
+    build:
+      context: ./grafana
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_SECURITY_X_FRAME_OPTIONS=
+    restart: always
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
 volumes:
-  pgdata:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

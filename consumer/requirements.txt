@@ -8,3 +8,4 @@ numpy
 # pyspark
 # psycopg2-binary
 google-cloud-bigquery
+prometheus-flask-exporter
