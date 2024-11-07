@@ -121,7 +121,7 @@ function App() {
             <br /><br />
             <button onClick={handleUpload}>Upload</button>
             <p>{status}</p>
-            <iframe src="http://localhost:3001/d/ee2z0zjgfzh1cc/bde-mini-project?from=2020-01-01T00:00:00.000Z&to=2024-09-28T00:00:00.000Z&timezone=browser&kiosk" style={{ width: '80vw', height: '80vh' }}></iframe>
+            <iframe src="http://bdemini.viewdns.net:3001/d/ee2z0zjgfzh1cc/bde-mini-project?from=2020-01-01T00:00:00.000Z&to=2024-09-28T00:00:00.000Z&timezone=browser&kiosk" style={{ width: '80vw', height: '80vh' }}></iframe>
             <h2>Forecast</h2>
             <button onClick={handleForecast}>Run Forecast</button>
             {forecast && (
