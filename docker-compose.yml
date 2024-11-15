@@ -139,31 +139,37 @@ services:
     entrypoint: ["python", "-u", "consumer.py"]
     volumes:
       - ./consumer/drilldown-439515-062f7705dec7.json:/app/consumer/drilldown-439515-062f7705dec7.json
-
-  airflow:
-    image: apache/airflow:2.3.0
-    restart: always
-    environment:
-      - AIRFLOW_CORE_EXECUTOR=LocalExecutor
-      - AIRFLOW_DATABASE_SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
-      - AIRFLOW__WEBSERVER__SECRET_KEY=your_secret_key_here
-    depends_on:
-      - postgres
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
     ports:
-      - "8080:8080"
-
-  incremental_upload:
-    build:
-      context: ./incremental_uploads
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
     depends_on:
+      - backend
+      - consumer
+      - kafka
       - minio
 
-  postgres:
-    image: postgres:13
-    environment:
-      - POSTGRES_USER=airflow
-      - POSTGRES_PASSWORD=airflow
-      - POSTGRES_DB=airflow
+  grafana:
+    build:
+      context: ./grafana
+      dockerfile: Dockerfile
     ports:
-      - "5432:5432"
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_SECURITY_X_FRAME_OPTIONS=
+    restart: always
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+volumes:
+  prometheus_data:
+    driver: local
+  grafana_data:
+    driver: local

@@ -2,6 +2,13 @@ global:
   scrape_interval: 15s
 
 scrape_configs:
-  - job_name: 'flask_app'
+  - job_name: 'backend'
     static_configs:
-      - targets: ['localhost:8000']  # The address of your Flask app
+        - targets: ['backend:8000']  # Replace with the correct hostname and port
+    metrics_path: '/app_metrics'
+
+  
+
+  - job_name: "consumer"
+    static_configs:
+      - targets: ["localhost:9090"]  # Adjust if consumer exposes metrics on a different port

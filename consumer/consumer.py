@@ -1,115 +1,159 @@
 import os
 import json
 import time
-import joblib
-from kafka import KafkaConsumer, errors
+import logging
+from kafka import KafkaConsumer
 from google.cloud import bigquery
 from minio import Minio
-from datetime import datetime
-from statsmodels.tsa.arima.model import ARIMA
 import pandas as pd
+from datetime import datetime
+from prometheus_client import Counter, start_http_server
 
+# Initialize Prometheus metrics
+FILES_PROCESSED = Counter("files_processed_total", "Total number of files processed")
+ROWS_INSERTED = Counter("rows_inserted_total", "Total number of rows successfully inserted into BigQuery")
+ROWS_FAILED = Counter("rows_failed_total", "Total number of rows that failed insertion")
+
+# Start Prometheus metrics server
+start_http_server(9091)
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Wait for other services to initialize
 time.sleep(5)
 
-# Set up environment variables and clients
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "drilldown-439515-95dc6c76a452.json"
+# Set Google application credentials
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "drilldown-439515-062f7705dec7.json"
+
+# Initialize BigQuery client
 client = bigquery.Client()
 minio_client = Minio("minio:9000", access_key="minioadmin", secret_key="minioadmin", secure=False)
 
 # Kafka Consumer setup
-def create_consumer():
-    return KafkaConsumer(
-        'file_uploaded',
-        bootstrap_servers=['kafka:9092'],
-        auto_offset_reset='latest',
-        enable_auto_commit=False,
-        group_id='file-processing-group'
-    )
+consumer = KafkaConsumer(
+    'file_uploaded',
+    bootstrap_servers=['kafka:9092'],
+    auto_offset_reset='latest',
+    enable_auto_commit=False,
+    group_id='file-processing-group'
+)
 
-consumer = create_consumer()
-print("Consumer initialized")
+logger.info("Consumer initialized")
 
-# BigQuery Table
+# BigQuery table configuration
 dataset_id = "bdeminiproject"
 table_id = "master"
 
-# Model Saving Settings
-MODEL_FILE = "arima_model.pkl"
-BUCKET_NAME = "models"
-
-# Load data (for now, this loads a CSV but could be changed to load from BigQuery)
-def load_data():
-    # Placeholder: Replace this with actual BigQuery loading code
-    return pd.read_csv('path_to_data.csv')
-
-# Save the model to MinIO
-def save_model_to_minio(model):
-    joblib.dump(model, MODEL_FILE)
-    with open(MODEL_FILE, 'rb') as file_data:
-        minio_client.put_object(BUCKET_NAME, MODEL_FILE, file_data, file_data.getbuffer().nbytes)
-
-# Incrementally train the model
-def incrementally_train_model():
-    data = load_data()
-    data['Date'] = pd.to_datetime(data['Date'])
-    data.set_index('Date', inplace=True)
-    model = ARIMA(data['Count'], order=(5, 1, 0))
-    model_fit = model.fit()
-    save_model_to_minio(model_fit)
-
-def upload_row_to_bigquery(row):
-    table_ref = client.dataset(dataset_id).table(table_id)
-    rows_to_insert = [
-        { "Area": int(row["Area"]), "Rpt Dist No": int(row["Rpt Dist No"]),
-          "Part 1-2": int(row["Part 1-2"]), "Crm Cd": int(row["Crm Cd"]),
-          "Vict Age": int(row["Vict Age"]), "Premis Cd": int(row["Premis Cd"]),
-          "Weapon Used Cd": int(row["Weapon Used Cd"]), "Crm Cd 1": int(row["Crm Cd 1"]),
-          "Crm Cd 2": int(row["Crm Cd 2"]), "Lat": float(row["Lat"]), "Lon": float(row["Lon"]) }
+def format_date(date_str):
+    # List of common date formats to attempt parsing
+    date_formats = [
+        "%Y-%m-%d", "%m/%d/%Y", "%d-%m-%Y", "%d/%m/%Y", "%Y/%m/%d",
+        "%Y.%m.%d", "%m-%d-%Y", "%d %B %Y", "%B %d, %Y", "%d %b %Y",
+        "%b %d, %Y", "%Y %b %d", "%b %d %Y", "%Y %B %d", "%d-%b-%Y",
+        "%d.%m.%Y", "%d %m %Y"
     ]
-    max_retries = 5
-    for attempt in range(max_retries):
+    for fmt in date_formats:
         try:
-            errors = client.insert_rows_json(table_ref, rows_to_insert)
-            if errors:
-                print(f"Errors while inserting rows: {errors}")
-            else:
-                print("Row inserted successfully.")
-            break
-        except Exception as e:
-            print(f"Error inserting row into BigQuery on attempt {attempt + 1}/{max_retries}: {e}")
-            time.sleep(2 ** attempt)
+            return datetime.strptime(date_str, fmt).strftime("%Y-%m-%d")
+        except ValueError:
+            continue
+    logger.warning(f"Invalid date format: {date_str}")
+    return None
+
+def format_time(time_str):
+    try:
+        return datetime.strptime(time_str, "%H:%M:%S").strftime("%H:%M:%S")
+    except ValueError:
+        try:
+            return datetime.strptime(time_str, "%I:%M %p").strftime("%H:%M:%S")
+        except ValueError:
+            logger.warning(f"Invalid time format: {time_str}")
+            return None
+
+def validate_and_upload_row(row):
+    if pd.isnull(row["Date Rptd"]) or pd.isnull(row["Date Occ"]):
+        logger.warning("Missing required date fields; skipping row.")
+        return False
+
+    date_rptd = format_date(row["Date Rptd"])
+    date_occ = format_date(row["Date Occ"])
+    time_occ = format_time(row["Time Occ"])
+
+    if date_rptd is None or date_occ is None or time_occ is None:
+        logger.warning("Date/Time formatting issue; skipping row.")
+        return False
+
+    row = row.where(pd.notnull(row), None)
+    rows_to_insert = [
+        {
+            "Date Rptd": date_rptd,
+            "Date Occ": date_occ,
+            "Time Occ": time_occ,
+            "Area": int(row["Area"]) if row["Area"] else None,
+            "Area Name": row["Area Name"],
+            "Rpt Dist No": int(row["Rpt Dist No"]) if row["Rpt Dist No"] else None,
+            "Part 1-2": int(row["Part 1-2"]) if row["Part 1-2"] else None,
+            "Crm Cd": int(row["Crm Cd"]) if row["Crm Cd"] else None,
+            "Crm Cd Desc": row["Crm Cd Desc"],
+            "Mo Codes": row["Mo Codes"],
+            "Vict Age": int(row["Vict Age"]) if row["Vict Age"] else None,
+            "Vict Sex": row["Vict Sex"],
+            "Vict Descent": row["Vict Descent"],
+            "Premis Cd": int(row["Premis Cd"]) if row["Premis Cd"] else None,
+            "Premis Desc": row["Premis Desc"],
+            "Weapon Used Cd": row.get("Weapon Used Cd", None),
+            "Weapon Desc": row["Weapon Desc"],
+            "Status": row["Status"],
+            "Status Desc": row["Status Desc"],
+            "Crm Cd 1": int(row["Crm Cd 1"]) if row["Crm Cd 1"] else None,
+            "Crm Cd 2": int(row["Crm Cd 2"]) if row["Crm Cd 2"] else None,
+            "Location": row["Location"],
+            "Cross Street": row["Cross Street"],
+            "Lat": float(row["Lat"]) if row["Lat"] else None,
+            "Lon": float(row["Lon"]) if row["Lon"] else None
+        }
+    ]
+
+    table_ref = client.dataset(dataset_id).table(table_id)
+    errors = client.insert_rows_json(table_ref, rows_to_insert)
+    if errors:
+        logger.error(f"Errors while inserting rows: {errors}")
+        ROWS_FAILED.inc()
+        return False
+    else:
+        logger.info("Row inserted successfully.")
+        ROWS_INSERTED.inc()
+        return True
 
 def process_file(file_id, filename):
     try:
         response = minio_client.get_object("csv-uploads", filename)
         df = pd.read_csv(response)
+
         if df.empty:
-            print("File is empty or has no readable columns.")
+            logger.warning("File is empty or has no readable columns.")
             return
+
         for _, row in df.iterrows():
-            upload_row_to_bigquery(row)
+            validate_and_upload_row(row)
+        
         response.close()
         response.release_conn()
-        print("File processing complete.")
-
-        # Incrementally train and save model after file processing
-        incrementally_train_model()
-
+        logger.info("File processing complete.")
+        FILES_PROCESSED.inc()
     except Exception as e:
-        print(f"Error processing file: {e}")
+        logger.error(f"Error processing file: {e}")
 
-while True:
-    try:
-        for message in consumer:
-            msg_data = json.loads(message.value.decode('utf-8'))
-            file_id = msg_data['file_id']
-            filename = msg_data['filename']
-            print(f"Received file_id: {file_id}, filename: {filename}")
-            process_file(file_id, filename)
-            consumer.commit()
-    except errors.IllegalStateError:
-        print("Consumer lost connection, retrying...")
-        time.sleep(5)
-        consumer = create_consumer()
-    except Exception as e:
-        print(f"Unexpected error: {e}")
+try:
+    for message in consumer:
+        msg_data = json.loads(message.value.decode('utf-8'))
+        file_id = msg_data['file_id']
+        filename = msg_data['filename']
+        logger.info(f"Received file_id: {file_id}, filename: {filename}")
+        
+        process_file(file_id, filename)
+        consumer.commit()
+except Exception as e:
+    logger.error(f"Consumer error: {e}")

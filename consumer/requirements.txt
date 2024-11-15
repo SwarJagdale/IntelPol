@@ -5,6 +5,7 @@ statsmodels
 pandas
 flask-cors
 numpy
-psycopg2-binary
+# pyspark
+# psycopg2-binary
 google-cloud-bigquery
-joblib
+prometheus-flask-exporter
