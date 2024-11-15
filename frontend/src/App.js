@@ -36,11 +36,22 @@ function App() {
 
   return (
     <div style={{ padding: '50px' }}>
-      <h2>Upload PDF</h2>
+      <h2>Upload PDF in any</h2>
       <input type="file" accept=".csv" onChange={handleFileChange} />
       <br /><br />
       <button onClick={handleUpload}>Upload</button>
       <p>{status}</p>
+
+      <iframe
+        src="http://localhost:3001/d/ee2z0zjgfzh1cc/bde-mini-project?from=now-6h&to=now&timezone=browser"
+        width="100%"
+        height="800"
+      
+        style={{ border: 'none' }}
+        >abasd    
+       </iframe>
+
+      
     </div>
   );
 }

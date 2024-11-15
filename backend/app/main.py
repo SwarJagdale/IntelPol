@@ -14,9 +14,12 @@ from datetime import datetime
 app = Flask(__name__)
 CORS(app)
 
+# Initialize Prometheus metrics
+metrics = PrometheusMetrics(app)
+
 # Initialize MinIO client
 minio_client = Minio(
-    "minio:9000",
+    "localhost:9000",
     access_key="minioadmin",
     secret_key="minioadmin",
     secure=False
@@ -34,16 +37,6 @@ producer = KafkaProducer(
     request_timeout_ms=30000
 )
 
-metrics = PrometheusMetrics(app)
-
-@metrics.counter('requests_total', 'Total number of requests')
-def count_requests():
-    return 1
-
-@app.before_request
-def before_request():
-    count_requests()
-
 # Define the expected columns
 EXPECTED_COLUMNS = [
     'Area', 'Rpt Dist No', 'Part 1-2', 'Crm Cd', 'Vict Age',
@@ -55,13 +48,10 @@ def validate_csv_structure(df):
     if not all(col in df.columns for col in EXPECTED_COLUMNS):
         return False, f"Missing columns: {', '.join([col for col in EXPECTED_COLUMNS if col not in df.columns])}"
     
-    # Optional: Add further validation for column types if needed
-    # Example: Ensure 'Vict Age' is of type int
+    # Ensure 'Vict Age' is of integer type
     if not pd.api.types.is_integer_dtype(df['Vict Age']):
         return False, "'Vict Age' must be of integer type."
     
-    # Add more type checks as needed...
-
     return True, ""
 
 @app.route('/upload', methods=['POST'])
@@ -84,7 +74,6 @@ def upload_file():
         print("Generated filename:", filename)
 
         try:
-            # Read the file content to ensure it's not empty
             file_content = file.read()
             if not file_content:
                 print("Empty file content.")
@@ -94,7 +83,7 @@ def upload_file():
             minio_client.put_object(
                 bucket_name,
                 filename,
-                data=io.BytesIO(file_content),  # Use BytesIO to ensure correct stream format
+                data=io.BytesIO(file_content),
                 length=len(file_content),
                 part_size=10*1024*1024,
                 content_type=file.content_type
@@ -122,6 +111,6 @@ def upload_file():
 @app.route('/')
 def home():
     return "CSV Prediction Service is running!"
-
+    
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='0.0.0.0', port=8000)
