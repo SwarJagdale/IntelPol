@@ -7,7 +7,7 @@ RUN grafana-cli plugins install grafana-bigquery-datasource
 COPY grafana.ini /etc/grafana/grafana.ini
 
 # Copy the service account key for BigQuery
-COPY servicekey.json /etc/grafana/servicekey.json
+COPY drilldown-439515-95dc6c76a452.json /etc/grafana/drilldown-439515-95dc6c76a452.json
 
 # Copy the dashboard JSON file
 COPY dashboard.json /etc/grafana/dashboards/dashboard.json

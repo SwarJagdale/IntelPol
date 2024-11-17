@@ -46,24 +46,18 @@ def count_requests():
 def before_request():
     count_requests()
 
-# Define the expected columns
 EXPECTED_COLUMNS = [
     'Area', 'Rpt Dist No', 'Part 1-2', 'Crm Cd', 'Vict Age',
     'Premis Cd', 'Weapon Used Cd', 'Crm Cd 1', 'Crm Cd 2', 'Lat', 'Lon'
 ]
 
 def validate_csv_structure(df):
-    # Check if all expected columns are present
     if not all(col in df.columns for col in EXPECTED_COLUMNS):
         return False, f"Missing columns: {', '.join([col for col in EXPECTED_COLUMNS if col not in df.columns])}"
-    
-    # Optional: Add further validation for column types if needed
-    # Example: Ensure 'Vict Age' is of type int
+
     if not pd.api.types.is_integer_dtype(df['Vict Age']):
         return False, "'Vict Age' must be of integer type."
     
-    # Add more type checks as needed...
-
     return True, ""
 
 @app.route('/upload', methods=['POST'])
@@ -152,6 +146,7 @@ def save_model_to_minio(model, model_name="ARIMA_MODEL_LATEST"):
     except S3Error as e:
         print(f"Failed to upload model to MinIO: {e}")
         raise e
+    
 @app.route('/forecast', methods=['POST'])
 def forecast():
     """Endpoint to perform forecasting using the latest ARIMA model."""
@@ -187,9 +182,11 @@ def forecast():
         return jsonify({"message": f"Failed to load model: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"message": f"Forecasting error: {str(e)}"}), 500
+    
 @app.route('/')
 def home():
     return "CSV Prediction Service is running!"
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=8000, debug=True)
+

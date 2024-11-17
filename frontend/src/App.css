@@ -56,11 +56,176 @@ body {
   border-radius: 8px;
 }
 
+/* Navbar styles */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #0056b3;
+  padding: 15px 30px;
+  color: white;
+  font-size: 18px;
+  margin-top: -50px;
+}
+
+.navbar .logo {
+  font-weight: bold;
+  font-size: 24px;
+  color: white;
+}
+
+.navbar .nav-links {
+  display: flex;
+  gap: 20px;
+}
+
+.navbar .nav-links a {
+  text-decoration: none;
+  color: white;
+  font-size: 18px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  transition: background-color 0.3s;
+}
+
+.navbar .nav-links a:hover {
+  background-color: #00449e;
+}
+
+/* Title styling */
+.title {
+  text-align: center;
+  margin-bottom: 30px;
+  font-size: 60px;
+  color: #1d3557;
+  text-transform: uppercase;
+  text-shadow: 2px 2px #a8dadc;
+  letter-spacing: 5px;
+}
+
+/* Upload section */
+.upload-section {
+  background: linear-gradient(135deg, #457b9d, #1d3557);
+  color: #fff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.upload-section h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+  color: white;
+}
+
+.choosefile input {
+  display: block;
+  margin: 10px auto;
+  padding: 10px;
+  border: 2px solid #a8dadc;
+  border-radius: 5px;
+}
+
+.upload-section button {
+  background-color: #e63946;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.upload-section button:hover {
+  transform: scale(1.1);
+}
+
+/* Hide the default input file and replace it with a styled label */
+.custom-file-upload {
+  display: inline-block;
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.custom-file-upload:hover {
+  background-color: #0056b3;
+}
+
+.file-status {
+  font-size: 14px;
+  color: white;
+  margin-top: 5px;
+}
+
+
+/* Grafana iframe section */
+.grafana-section {
+  padding: 30px;
+  background-color: #f1faee;
+  border: 2px dashed #457b9d;
+  border-radius: 10px;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.grafana-section iframe {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* Forecasting section */
+.forecast-section {
+  padding: 30px;
+  background: linear-gradient(135deg, #a8dadc, #457b9d);
+  border-radius: 10px;
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  text-align: center;
+}
+
+.forecast-section h2 {
+  font-size: 24px;
+  margin-bottom: 20px;
+}
+
+.forecast-section button {
+  background-color: #1d3557;
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.forecast-section button:hover {
+  background-color: #003049;
+}
+
+.forecast-section .chart-container {
+  margin-top: 20px;
+  background-color: #f8f9fa;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
 /* Heading styles */
 h2 {
   text-align: center;
   margin-bottom: 20px;
   color: #0056b3;
+  text-decoration: underline;
 }
 
 /* File input */
