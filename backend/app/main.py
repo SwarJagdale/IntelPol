@@ -183,6 +183,102 @@ def forecast():
     except Exception as e:
         return jsonify({"message": f"Forecasting error: {str(e)}"}), 500
     
+    
+    
+@app.route('/upload', methods=['POST'])
+def upload_file_or_form():
+    print("Received request at /upload")
+    # Check if the request contains a file
+    if 'file' in request.files:
+        file = request.files['file']
+        print("File received:", file.filename)
+
+        if file.filename == '':
+            return jsonify({"message": "No selected file."}), 400
+
+        if file and (file.content_type == 'text/csv' or file.content_type == 'application/vnd.ms-excel'):
+            return process_csv(file)
+        else:
+            return jsonify({"message": "Invalid file type. Only CSV and Excel files are allowed."}), 400
+
+    # Check if JSON form data is provided
+    elif request.json:
+        form_data = request.get_json()
+        return process_form(form_data)
+
+    else:
+        return jsonify({"message": "No file or form data provided."}), 400
+
+def process_csv(file):
+    file_id = str(uuid.uuid4())
+    filename = f"{file.filename}_{file_id}"
+
+    try:
+        file_content = file.read()
+        if not file_content:
+            return jsonify({"message": "The file is empty."}), 400
+
+        # Upload to MinIO
+        minio_client.put_object(
+            bucket_name,
+            filename,
+            data=io.BytesIO(file_content),
+            length=len(file_content),
+            part_size=10 * 1024 * 1024,
+            content_type=file.content_type
+        )
+
+        # Publish to Kafka
+        time = datetime.now().isoformat()
+        producer.send('file_uploaded', value=json.dumps({
+            'file_id': file_id,
+            'filename': filename,
+            'time': time
+        }).encode('utf-8'))
+        producer.flush()
+
+        return jsonify({"message": "File uploaded and processed successfully.", "file_id": file_id}), 200
+
+    except S3Error as e:
+        return jsonify({"message": f"Failed to upload to MinIO: {str(e)}"}), 500
+
+
+def process_form(form_data):
+    try:
+        # Convert form data to DataFrame for validation
+        df = pd.DataFrame([form_data])
+        is_valid, error_message = validate_csv_structure(df)
+        if not is_valid:
+            return jsonify({"message": f"Validation error: {error_message}"}), 400
+
+        # Save to MinIO
+        file_id = str(uuid.uuid4())
+        filename = f"form_data_{file_id}.csv"
+        csv_data = df.to_csv(index=False).encode('utf-8')
+
+        minio_client.put_object(
+            bucket_name,
+            filename,
+            data=io.BytesIO(csv_data),
+            length=len(csv_data),
+            content_type="text/csv"
+        )
+
+        # Publish to Kafka
+        time = datetime.now().isoformat()
+        producer.send('form_uploaded', value=json.dumps({
+            'file_id': file_id,
+            'filename': filename,
+            'time': time
+        }).encode('utf-8'))
+        producer.flush()
+
+        return jsonify({"message": "Form data uploaded and processed successfully.", "file_id": file_id}), 200
+
+    except Exception as e:
+        return jsonify({"message": f"Form processing error: {str(e)}"}), 500
+    
+    
 @app.route('/')
 def home():
     return "CSV Prediction Service is running!"
