@@ -21,15 +21,7 @@ RUN pip install --upgrade pip setuptools wheel
 COPY app/requirements.txt .
 
 # Install dependencies from requirements.txt
-# This includes PaddleOCR and other dependencies
-RUN pip install -r requirements.txt
-
-# Copy the rest of the application code into the container
-COPY app /app/app
-COPY wait-for-it.sh /wait-for-it.sh
-RUN chmod +x /wait-for-it.sh
-
-# Expose port 8000 for Flask to listen on
+# Thlocaln
 EXPOSE 8000
 
 # Run the Flask app

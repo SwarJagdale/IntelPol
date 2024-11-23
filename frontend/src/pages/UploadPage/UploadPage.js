@@ -27,7 +27,7 @@ const UploadPage = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post('http://localhost:8000/upload', uploadData, {
+      const response = await axios.post('http://bdeminiproj.viewdns.net:8000/upload', uploadData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
