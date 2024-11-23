@@ -17,7 +17,7 @@ const ForecastPage = () => {
     setError('');
     setLoading(true);
     try {
-      const response = await axios.post('http://bdeminiproj.viewdns.net:8000/forecast', { future_steps: 10 });
+      const response = await axios.post('http://localhost:8000/forecast', { future_steps: 10 });
       const { history, forecast } = response.data;
 
       const historyData = history.slice(-100).map((value, index) => ({
