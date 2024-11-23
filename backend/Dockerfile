@@ -20,7 +20,7 @@ RUN pip install --upgrade pip setuptools wheel
 # Copy the requirements.txt first to cache dependencies
 COPY app/requirements.txt .
 
-# Install dependencies from requirements.txt
+# Install dependencies from requirements.txtwa
 # This includes PaddleOCR and other dependencies
 RUN pip install -r requirements.txt
 
