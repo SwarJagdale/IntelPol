@@ -96,6 +96,37 @@ services:
       - grafana_data:/var/lib/grafana
     depends_on:
       - prometheus
+  airflow:
+    image: apache/airflow:2.6.1
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+      - GOOGLE_APPLICATION_CREDENTIALS=/opt/airflow/service-account-key.json
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./plugins:/opt/airflow/plugins
+      - ./service-account-key.json:/opt/airflow/service-account-key.json
+    command: >
+      bash -c "airflow db upgrade &&
+               airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com &&
+               airflow webserver"
+    depends_on:
+      - kafka
+      - minio
+    restart: always
+  # jenkins:
+  #   image: jenkins/jenkins:lts
+  #   ports:
+  #     - "8081:8080"  # Jenkins web UI port
+  #     - "50000:50000"
+  #   volumes:
+  #     - jenkins_home:/var/jenkins_home
+  #   depends_on:
+  #     - airflow
 volumes:
   prometheus_data:
     driver: local

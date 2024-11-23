@@ -11,3 +11,4 @@ joblib
 # pickle
 # BytesIO
 statsmodels
+boto3
