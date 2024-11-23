@@ -7,7 +7,7 @@ const GrafanaPage = () => {
       <h1 className={styles.title}>Grafana Dashboard</h1>
       <div className={styles.dashboardContainer}>
         <iframe
-          src="http://localhost:3001/d/ee2z0zjgfzh1cc/bde-mini-project?from=2020-01-01T00:00:00.000Z&to=2024-09-28T00:00:00.000Z&timezone=browser&kiosk"
+          src="http://localhost:3000/public-dashboards/edb196cf46e64a42baf3a6a1ac7c05a1"
           className={styles.dashboard}
           title="Grafana Dashboard"
         ></iframe>
