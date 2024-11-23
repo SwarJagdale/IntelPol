@@ -1,0 +1,127 @@
+.uploadPage {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.title {
+  font-size: 2.5rem;
+  color: #0056b3;
+  margin-bottom: 2rem;
+  text-align: center;
+}
+
+.uploadContainer {
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 2rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.dropzone {
+  border: 2px dashed #0056b3;
+  border-radius: 4px;
+  padding: 2rem;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-bottom: 1rem;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropzone:hover {
+  background-color: #e9ecef;
+}
+
+.fileInput {
+  display: none;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.chooseFileButton,
+.uploadButton {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.chooseFileButton {
+  background-color: #6c757d;
+  color: white;
+}
+
+.chooseFileButton:hover {
+  background-color: #5a6268;
+}
+
+.uploadButton {
+  background-color: #0056b3;
+  color: white;
+}
+
+.uploadButton:hover:not(:disabled) {
+  background-color: #003d82;
+}
+
+.uploadButton:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.fileSelected {
+  font-weight: bold;
+  color: #0056b3;
+}
+
+.successStatus {
+  margin-top: 1rem;
+  color: #28a745;
+  font-weight: bold;
+  text-align: center;
+}
+
+.errorStatus {
+  margin-top: 1rem;
+  color: #dc3545;
+  font-weight: bold;
+  text-align: center;
+}
+
+.instructions {
+  background-color: #e9ecef;
+  border-radius: 8px;
+  padding: 2rem;
+}
+
+.instructions h2 {
+  color: #0056b3;
+  margin-bottom: 1rem;
+}
+
+.instructions ol {
+  padding-left: 1.5rem;
+  margin-bottom: 1rem;
+}
+
+.instructions li {
+  margin-bottom: 0.5rem;
+}
+
+.instructions p {
+  font-style: italic;
+  color: #666;
+}
+

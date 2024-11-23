@@ -8,7 +8,5 @@ six
 uuid
 google-cloud-bigquery
 joblib
-# pickle
-# BytesIO
 statsmodels
 boto3

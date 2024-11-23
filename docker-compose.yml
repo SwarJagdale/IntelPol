@@ -63,10 +63,10 @@ services:
       - kafka
     environment:
       - KAFKA_BROKER=kafka:9092
-      - GOOGLE_APPLICATION_CREDENTIALS=/app/consumer/drilldown-439515-062f7705dec7.json
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/consumer/servicekey.json
     entrypoint: [ "python", "-u", "consumer.py"]
     volumes:
-      - ./consumer/drilldown-439515-062f7705dec7.json:/app/consumer/drilldown-439515-062f7705dec7.json
+      - ./consumer/servicekey.json:/app/consumer/servicekey.json
   prometheus:
     image: prom/prometheus
     container_name: prometheus

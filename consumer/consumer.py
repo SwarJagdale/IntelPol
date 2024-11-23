@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 time.sleep(5)
 
 # Set Google application credentials
-os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "drilldown-439515-062f7705dec7.json"
+os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "servicekey.json"
 
 # Initialize BigQuery client
 client = bigquery.Client()

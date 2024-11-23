@@ -1,6 +1,9 @@
-drilldown-439515-062f7705dec7.json
+servicekey.json
 frontend/node_modules/
-consumer/drilldown-439515-062f7705dec7.json
+consumer/servicekey.json
+consumer/servicekey.json
+grafana/servicekey.json
+node_modules/
 
 temp.ipynb
 

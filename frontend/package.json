@@ -12,7 +12,8 @@
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4",
     "react-chartjs-2": "^4.0.0",
-    "chart.js": "^4.0.0"
+    "chart.js": "^4.0.0",
+    "react-router-dom": "^6.x.x"
   },
   "scripts": {
     "start": "react-scripts start",
