@@ -19,7 +19,7 @@ const ForecastPage = () => {
     try {
       const response = await axios.post('http://localhost:8000/forecast', { future_steps: 10 });
       const { history, forecast } = response.data;
-
+ 
       const historyData = history.slice(-100).map((value, index) => ({
         x: index + 1,
         y: value,
