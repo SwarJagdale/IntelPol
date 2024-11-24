@@ -6,29 +6,42 @@ const LandingPage = () => {
   return (
     <div className={styles.landingPage}>
       <header className={styles.hero}>
-        <h1 className={styles.title}>Welcome to PyPDF</h1>
-        <p className={styles.subtitle}>Your all-in-one solution for PDF processing and data analysis</p>
-        <Link to="/signup" className={styles.ctaButton}>Get Started</Link>
+        <div className={styles.heroBackground}>
+          <div className={styles.particles}></div>
+        </div>
+        <div className={styles.heroContent}>
+          <h1 className={styles.title}>Welcome to PyPDF</h1>
+          <p className={styles.subtitle}>Your all-in-one solution for PDF processing and data analysis</p>
+          <Link to="/signup" className={styles.ctaButton}>Get Started</Link>
+        </div>
       </header>
       
       <section className={styles.features}>
         <div className={styles.feature}>
-          <i className={`${styles.icon} fas fa-file-upload`}></i>
+          <div className={styles.iconWrapper}>
+            <i className={`${styles.icon} ${styles.rotatingIcon} fas fa-file-upload`}></i>
+          </div>
           <h2>Upload CSV</h2>
           <p>Easily upload and process your CSV files with our intuitive interface.</p>
         </div>
         <div className={styles.feature}>
-          <i className={`${styles.icon} fas fa-keyboard`}></i>
+          <div className={styles.iconWrapper}>
+            <i className={`${styles.icon} ${styles.rotatingIcon} fas fa-keyboard`}></i>
+          </div>
           <h2>Data Input</h2>
           <p>Manually input data through our user-friendly form for quick analysis.</p>
         </div>
         <div className={styles.feature}>
-          <i className={`${styles.icon} fas fa-chart-line`}></i>
+          <div className={styles.iconWrapper}>
+            <i className={`${styles.icon} ${styles.rotatingIcon} fas fa-chart-line`}></i>
+          </div>
           <h2>Grafana Dashboard</h2>
           <p>Visualize your data with powerful, interactive Grafana dashboards.</p>
         </div>
         <div className={styles.feature}>
-          <i className={`${styles.icon} fas fa-magic`}></i>
+          <div className={styles.iconWrapper}>
+            <i className={`${styles.icon} ${styles.rotatingIcon} fas fa-magic`}></i>
+          </div>
           <h2>Forecasting</h2>
           <p>Generate accurate forecasts based on your historical data.</p>
         </div>
@@ -73,4 +86,3 @@ const LandingPage = () => {
 };
 
 export default LandingPage;
-
