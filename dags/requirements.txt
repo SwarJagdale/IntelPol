@@ -12,3 +12,5 @@ statsmodels
 google-generativeai
 PyPDF2
 openai
+protobuf==3.20.3
+beautifulsoup4
