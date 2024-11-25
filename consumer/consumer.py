@@ -4,18 +4,23 @@ import time
 import logging
 from kafka import KafkaConsumer
 from google.cloud import bigquery
-from minio import Minio
 import pandas as pd
 from datetime import datetime
-from prometheus_client import Counter, start_http_server
+import boto3
+import dotenv
+dotenv.load_dotenv()
 
-# Initialize Prometheus metrics
-FILES_PROCESSED = Counter("files_processed_total", "Total number of files processed")
-ROWS_INSERTED = Counter("rows_inserted_total", "Total number of rows successfully inserted into BigQuery")
-ROWS_FAILED = Counter("rows_failed_total", "Total number of rows that failed insertion")
+# Initialize s3
+s3_client = boto3.client(
+    's3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_KEY'),
+    region_name='ap-south-1'
+)
 
-# Start Prometheus metrics server
-start_http_server(9091)
+
+
+
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -30,13 +35,6 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "servicekey.json"
 # Initialize BigQuery client
 client = bigquery.Client()
 
-# Initialize MinIO client
-minio_client = Minio(
-    "minio:9000",
-    access_key="minioadmin",
-    secret_key="minioadmin",
-    secure=False
-)
 
 # Kafka Consumer setup
 consumer = KafkaConsumer(
@@ -55,6 +53,7 @@ table_id = "master"
 
 def format_date(date_str):
     # List of common date formats to attempt parsing
+    date_str=str(date_str)
     date_formats = [
         "%Y-%m-%d", "%m/%d/%Y", "%d-%m-%Y", "%d/%m/%Y", "%Y/%m/%d",
         "%Y.%m.%d", "%m-%d-%Y", "%d %B %Y", "%B %d, %Y", "%d %b %Y",
@@ -127,17 +126,20 @@ def validate_and_upload_row(row):
     errors = client.insert_rows_json(table_ref, rows_to_insert)
     if errors:
         logger.error(f"Errors while inserting rows: {errors}")
-        ROWS_FAILED.inc()
+        
         return False
     else:
         logger.info("Row inserted successfully.")
-        ROWS_INSERTED.inc()
+        
         return True
 
 def process_file(file_id, filename):
     try:
-        response = minio_client.get_object("csv-uploads", filename)
-        df = pd.read_csv(response)
+        
+        
+        s3_client.download_file("schwarzbde", r"uploads/"+filename, filename)
+        
+        df = pd.read_csv(filename)
 
         if df.empty:
             logger.warning("File is empty or has no readable columns.")
@@ -146,10 +148,10 @@ def process_file(file_id, filename):
         for _, row in df.iterrows():
             validate_and_upload_row(row)
         
-        response.close()
-        response.release_conn()
+        # response.close()
+        # response.release_conn()
         logger.info("File processing complete.")
-        FILES_PROCESSED.inc()
+        
     except Exception as e:
         logger.error(f"Error processing file: {e}")
 

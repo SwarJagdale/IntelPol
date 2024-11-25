@@ -53,6 +53,8 @@ services:
       - MINIO_ENDPOINT=minio:9000
       - MINIO_ACCESS_KEY=minioadmin
       - MINIO_SECRET_KEY=minioadmin
+    
+    
     entrypoint: ["/wait-for-it.sh", "kafka:9092", "--", "python", "app/main.py"]
 
   consumer:
@@ -82,6 +84,7 @@ services:
     entrypoint: [ "python", "-u", "crawled_data_consumer.py"]
     volumes:
       - ./consumer/servicekey.json:/app/servicekey.json
+      
     restart: always
   
 
@@ -116,6 +119,7 @@ services:
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
       - ./servicekey.json:/opt/airflow/servicekey.json
+
     command: >
       bash -c " airflow db init && airflow db upgrade &&
               airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com &&
@@ -181,12 +185,11 @@ services:
       - ./logs:/opt/airflow/logs
       - ./servicekey.json:/opt/airflow/servicekey.json
       
+      
     restart: always
 
 
 volumes:
-  prometheus_data:
-    driver: local
   grafana_data:
     driver: local
   postgres_data:

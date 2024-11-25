@@ -162,36 +162,8 @@ with DAG(
     catchup=False,
 ) as dag:
 
-    # task_load_data = PythonOperator(
-    #     task_id="load_data",
-    #     python_callable=load_data,
-    # )
-
-    # task_preprocess_data = PythonOperator(
-    #     task_id="preprocess_data",
-    #     python_callable=preprocess_data,
-    # )
-
-    # task_train_model = PythonOperator(
-    #     task_id="train_model",
-    #     python_callable=train_model,
-    # )
-
-    # task_save_model = PythonOperator(
-    #     task_id="save_model",
-    #     python_callable=save_model,
-    # )
-
-    # task_send_telegram_message = PythonOperator(
-    #     task_id="send_telegram_message",
-    #     python_callable=send_telegram_message,
-    # )
-
-    # Add BigQuery task to your DAG
-    task_bigquery = PythonOperator(
-        task_id='run_bigquery_query',
-        python_callable=bigquery_task,
-    )
+    
+    
     
     task_incrementally_train_model = PythonOperator(
         task_id="incrementally_train_model",

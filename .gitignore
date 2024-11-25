@@ -12,3 +12,4 @@ logs/
 dags/__pycache__/
 kafka_data/
 minio_data/
+.env

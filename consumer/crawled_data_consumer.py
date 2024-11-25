@@ -4,15 +4,21 @@ import time
 import logging
 from kafka import KafkaConsumer
 from google.cloud import bigquery
-from minio import Minio
+
 import pandas as pd
 from datetime import datetime
-from prometheus_client import Counter, start_http_server
+import dotenv
+dotenv.load_dotenv()
+import boto3
+s3_client = boto3.client(
+    's3',
+    aws_access_key_id=os.getenv('AWS_ACCESS_KEY'),
+    aws_secret_access_key=os.getenv('AWS_SECRET_KEY'),
+    region_name='ap-south-1'
+)
 
 # Initialize Prometheus metrics
-FILES_PROCESSED = Counter("crawled_files_processed_total", "Total number of crawled files processed")
-ROWS_INSERTED = Counter("crawled_rows_inserted_total", "Total number of rows successfully inserted into BigQuery")
-ROWS_FAILED = Counter("crawled_rows_failed_total", "Total number of rows that failed insertion")
+
 import requests
 
 
@@ -30,13 +36,7 @@ os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "servicekey.json"
 # Initialize BigQuery client
 client = bigquery.Client()
 
-# Initialize MinIO client
-minio_client = Minio(
-    "minio:9000",
-    access_key="minioadmin",
-    secret_key="minioadmin",
-    secure=False
-)
+
 
 # Kafka Consumer setup
 consumer = KafkaConsumer(
@@ -55,8 +55,10 @@ table_id = "Maharashtra"
 
 def process_file(file_id, filename):
     try:
-        response = minio_client.get_object("csv-uploads", filename)
-        df = pd.read_csv(response)
+        
+        s3_client.download_file("schwarzbde", f"uploads_crawled/"+filename, filename)
+        
+        df = pd.read_csv(filename)
 
         if df.empty:
             logger.warning("File is empty or has no readable columns.")
@@ -65,10 +67,10 @@ def process_file(file_id, filename):
         for _, row in df.iterrows():
             validate_and_upload_row(row)
         
-        response.close()
-        response.release_conn()
+        # response.close()
+        # response.release_conn()
         logger.info("File processing complete.")
-        FILES_PROCESSED.inc()
+        
     except Exception as e:
         logger.error(f"Error processing file: {e}")
 
@@ -82,7 +84,7 @@ def validate_and_upload_row(row):
         formatted_row = {
             "Case Number": str(row.get("Case Number")),
             "Section of Law": str(row.get("Section of Law")),
-            "Date": pd.to_datetime(row.get("Date")).strftime("%Y-%m-%d") if pd.notnull(row.get("Date")) else None,
+            "Date": pd.to_datetime(str(row.get("Date"))).strftime("%Y-%m-%d") if pd.notnull(row.get("Date")) else None,
             "Location": str(row.get("Location")),
             "Complainant": str(row.get("Complainant")),
             "Accused": str(row.get("Accused")),
@@ -95,12 +97,11 @@ def validate_and_upload_row(row):
         errors = client.insert_rows_json(table_ref, [row])
         if errors:
             logger.error(f"Failed to insert row: {errors}")
-            ROWS_FAILED.inc()
-        else:
-            ROWS_INSERTED.inc()
+            
+        
     except Exception as e:
         logger.error(f"Error validating/uploading row: {e}")
-        ROWS_FAILED.inc()
+        
 
 try:
     for message in consumer:

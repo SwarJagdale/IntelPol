@@ -1,6 +1,6 @@
 Flask
 kafka-python
-minio
+
 pandas
 flask-cors
 prometheus_flask_exporter
@@ -10,3 +10,4 @@ google-cloud-bigquery
 joblib
 statsmodels
 boto3
+python-dotenv
