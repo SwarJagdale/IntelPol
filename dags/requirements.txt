@@ -1,14 +1,10 @@
 apache-airflow[postgres,kubernetes]==2.6.1
 kafka-python
-minio
 pandas==2.0.3
 requests
-pyspark
 pyTelegramBotAPI
 apache-airflow-providers-google==8.0.0
 apache-airflow[celery]==2.6.1
-google-cloud-bigquery==3.7.0
-statsmodels
 google-generativeai
 PyPDF2
 openai

@@ -1,6 +1,6 @@
 Flask
 kafka-python
-minio
+
 statsmodels
 pandas
 flask-cors
