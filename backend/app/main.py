@@ -8,7 +8,7 @@ import io
 import json
 from flask_cors import CORS
 import uuid
-from prometheus_flask_exporter import PrometheusMetrics
+
 from datetime import datetime
 import pickle
 from io import BytesIO
@@ -36,15 +36,10 @@ producer = KafkaProducer(
     request_timeout_ms=30000
 )
 
-metrics = PrometheusMetrics(app)
 
-@metrics.counter('requests_total', 'Total number of requests')
-def count_requests():
-    return 1
 
-@app.before_request
-def before_request():
-    count_requests()
+
+
 
 EXPECTED_COLUMNS = [
     'Area', 'Rpt Dist No', 'Part 1-2', 'Crm Cd', 'Vict Age',
@@ -184,6 +179,66 @@ def forecast():
         return jsonify({"message": f"Forecasting error: {str(e)}"}), 500
     
     
+
+
+##Add another endpoint to handle upload but for another topic 'crawled_data'
+@app.route('/upload_crawled_data', methods=['POST'])
+def upload_crawled_data():
+    print("Received request at /upload_crawled_data")
+    if 'file' not in request.files:
+        print("No file part in the request.")
+        return jsonify({"message": "No file part in the request."}), 400
+
+    file = request.files['file']
+    print("File received:", file.filename)
+
+    if file.filename == '':
+        print("No selected file.")
+        return jsonify({"message": "No selected file."}), 400
+
+    if file and (file.content_type == 'text/csv' or file.content_type == 'application/vnd.ms-excel'):
+        file_id = str(uuid.uuid4())
+        filename = f"{file.filename}_{file_id}"
+        print("Generated filename:", filename)
+
+        try:
+            # Read the file content to ensure it's not empty
+            file_content = file.read()
+            if not file_content:
+                print("Empty file content.")
+                return jsonify({"message": "The file is empty."}), 400
+
+            # Upload to MinIO
+            minio_client.put_object(
+                bucket_name,
+                filename,
+                data=io.BytesIO(file_content),  # Use BytesIO to ensure correct stream format
+                length=len(file_content),
+                part_size=10*1024*1024,
+                content_type=file.content_type
+            )
+            print("File uploaded to MinIO successfully.")
+        except S3Error as e:
+            print(f"MinIO upload error: {e}")
+            return jsonify({"message": f"Failed to upload to MinIO: {str(e)}"}), 500
+
+        print("Publishing to Kafka...")
+        time = datetime.now().isoformat()
+        producer.send('crawled_data', value=json.dumps({
+            'file_id': file_id,
+            'filename': filename,
+            'time': time
+        }).encode('utf-8'))
+        producer.flush()
+
+        print("Kafka message sent.")
+        return jsonify({"message": "File uploaded and processed successfully.", "file_id": file_id}), 200
+    else:
+        print("Invalid file type.")
+        return jsonify({"message": "Invalid file type. Only CSV and Excel files are allowed."}), 400
+
+
+
     
 @app.route('/upload', methods=['POST'])
 def upload_file_or_form():
@@ -284,7 +339,7 @@ def home():
     return "CSV Prediction Service is running!"
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8000, debug=True)
+    app.run(host='0.0.0.0', port=8000)
 
 
 
