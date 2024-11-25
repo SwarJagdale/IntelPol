@@ -8,3 +8,7 @@ node_modules/
 temp.ipynb
 
 grafana/servicekey.json
+logs/
+dags/__pycache__/
+kafka_data/
+minio_data/

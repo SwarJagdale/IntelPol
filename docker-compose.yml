@@ -67,20 +67,23 @@ services:
     entrypoint: [ "python", "-u", "consumer.py"]
     volumes:
       - ./consumer/servicekey.json:/app/consumer/servicekey.json
-  prometheus:
-    image: prom/prometheus
-    container_name: prometheus
-    ports:
-      - "9090:9090"
-    volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml
-    command:
-      - "--config.file=/etc/prometheus/prometheus.yml"
+    restart: always
+
+  crawled-data-consumer:
+    build:
+      context: ./consumer
+      dockerfile: Dockerfile
     depends_on:
-      - backend
-      - consumer
       - kafka
       - minio
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - GOOGLE_APPLICATION_CREDENTIALS=/app/servicekey.json
+    entrypoint: [ "python", "-u", "crawled_data_consumer.py"]
+    volumes:
+      - ./consumer/servicekey.json:/app/servicekey.json
+    restart: always
+  
 
   grafana:
     build:
@@ -96,38 +99,95 @@ services:
       - grafana_data:/var/lib/grafana
     
   airflow:
-    image: apache/airflow:2.6.1
+    build:
+      context: ./dags     # Pointing to the 'dags' folder where the Dockerfile is located
     environment:
-      - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
+      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
       - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
-      - GOOGLE_APPLICATION_CREDENTIALS=/opt/airflow/service-account-key.json
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6380/0
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://airflow:airflow@postgres/airflow
+      - GOOGLE_APPLICATION_CREDENTIALS=/opt/airflow/servicekey.json
       - AIRFLOW__CORE__LOAD_EXAMPLES=False
     ports:
       - "8080:8080"
     volumes:
-      - ./dags:/opt/airflow/dags
+      - ./dags:/opt/airflow/dags  # Mount the 'dags' folder to Airflow's DAGs directory
       - ./logs:/opt/airflow/logs
       - ./plugins:/opt/airflow/plugins
-      - ./service-account-key.json:/opt/airflow/service-account-key.json
+      - ./servicekey.json:/opt/airflow/servicekey.json
     command: >
-      bash -c "airflow db upgrade &&
-               airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com &&
+      bash -c " airflow db init && airflow db upgrade &&
+              airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com &&
                airflow webserver"
+    restart: always
     depends_on:
       - kafka
       - minio
+      - postgres
+
+  airflow-scheduler:
+    build:
+      context: ./dags    # Ensure the scheduler uses the same custom image
+    depends_on:
+      - airflow
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
+      - AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION=False
+      - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6380/0
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://airflow:airflow@postgres/airflow
+      - GOOGLE_APPLICATION_CREDENTIALS=/opt/airflow/servicekey.json
+      - AIRFLOW__CORE__LOAD_EXAMPLES=False
+    command: >
+      bash -c " airflow db init && airflow db upgrade &&
+      airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com &&
+              airflow scheduler"
     restart: always
-  # jenkins:
-  #   image: jenkins/jenkins:lts
-  #   ports:
-  #     - "8081:8080"  # Jenkins web UI port
-  #     - "50000:50000"
-  #   volumes:
-  #     - jenkins_home:/var/jenkins_home
-  #   depends_on:
-  #     - airflow
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./servicekey.json:/opt/airflow/servicekey.json
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+  redis:
+    image: redis:latest
+    command: redis-server --bind 0.0.0.0 --port 6380
+    ports:
+      - "6380:6379"
+  airflow-worker:
+    build:
+      context: ./dags
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=CeleryExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AIRFLOW__CELERY__BROKER_URL=redis://redis:6380/0
+      - AIRFLOW__CELERY__RESULT_BACKEND=db+postgresql://airflow:airflow@postgres/airflow
+    command: >
+      airflow celery worker
+    depends_on:
+      - airflow
+      - redis
+      - postgres
+    volumes:
+      - ./dags:/opt/airflow/dags
+      - ./logs:/opt/airflow/logs
+      - ./servicekey.json:/opt/airflow/servicekey.json
+      
+    restart: always
+
+
 volumes:
   prometheus_data:
     driver: local
   grafana_data:
+    driver: local
+  postgres_data:
     driver: local
