@@ -23,7 +23,7 @@ def configure_genai(api_key):
     return genai.GenerativeModel('gemini-pro')
 
 
-def download_pdfs(url, headers, limit=3):
+def download_pdfs(url, headers, limit=1):
     """Download PDF files from the given URL."""
     try:
         response = requests.get(url, headers=headers)
@@ -164,6 +164,20 @@ def save_results(df, output_file='analysis_results.csv'):
         print(f"Error saving results: {e}")
 
 
+def upload_csv(file_path, url='http://backend:8000/upload_crawled_data'):
+    with open(file_path, 'rb') as f:
+        files = {'file': (file_path, f, 'text/csv')}
+        try:
+            response = requests.post(url, files=files)
+            if response.status_code == 200:
+                print("File uploaded successfully.")
+            else:
+                print(f"Failed to upload file. Status code: {response.status_code}")
+                print("Response:", response.json())
+        except requests.exceptions.RequestException as e:
+            print("An error occurred:", e)
+
+
 
 # Default arguments for the DAG
 default_args = {
@@ -218,6 +232,11 @@ def start():
     pdf_files = download_pdfs_task()
     all_results = analyze_pdfs_task(pdf_files)
     save_results_task(all_results)
+    upload_csv('analysis_results.csv')
+    for file in pdf_files:
+        os.remove(file)
+    os.remove('response.json')
+    
     
 
 # Create the tasks
