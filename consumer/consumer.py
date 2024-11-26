@@ -47,12 +47,12 @@ consumer = KafkaConsumer(
 
 logger.info("Consumer initialized")
 
-# BigQuery table configuration
+
 dataset_id = "bdeminiproject"
 table_id = "master"
 
 def format_date(date_str):
-    # List of common date formats to attempt parsing
+    
     date_str=str(date_str)
     date_formats = [
         "%Y-%m-%d", "%m/%d/%Y", "%d-%m-%Y", "%d/%m/%Y", "%Y/%m/%d",

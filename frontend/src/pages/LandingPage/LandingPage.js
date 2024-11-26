@@ -6,8 +6,8 @@ const LandingPage = () => {
   return (
     <div className={styles.landingPage}>
       <header className={styles.hero}>
-        <h1 className={styles.title}>Welcome to PyPDF</h1>
-        <p className={styles.subtitle}>Your all-in-one solution for PDF processing and data analysis</p>
+        <h1 className={styles.title}>Welcome to Crime Cloud</h1>
+        
         <Link to="/signup" className={styles.ctaButton}>Get Started</Link>
       </header>
       

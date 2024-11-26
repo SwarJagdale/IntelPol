@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from flask import Flask, request, jsonify
 
-
+# from google.cloud import bigquery
 from kafka import KafkaProducer
 import io
 import json
@@ -22,10 +22,9 @@ app = Flask(__name__)
 CORS(app)
 
 
-
-
-
-# Initialize Kafka Producer
+# os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "servicekey.json"
+# client = bigquery.Client()
+# 
 producer = KafkaProducer(
     bootstrap_servers='kafka:9092',
     max_request_size=1200000000,
@@ -307,6 +306,26 @@ def process_form(form_data):
     except Exception as e:
         return jsonify({"message": f"Form processing error: {str(e)}"}), 500
     
+
+
+
+
+@app.route('/retrain_forecasting_model', methods=['GET'])
+def retrain():
+    pass
+
+
+
+
+
+
+
+
+
+
+
+
+
     
 @app.route('/')
 def home():
