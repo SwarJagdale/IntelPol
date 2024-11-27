@@ -12,10 +12,11 @@ import PyPDF2
 import requests
 from bs4 import BeautifulSoup
 import json
-
+import dotenv
+dotenv.load_dotenv()
 
 sys.path.append(str(Path(__file__).resolve().parent.parent / 'gemini'))
-openai.api_key="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"
+openai.api_key=os.getenv('OPENAI_API_KEY')
 
 def configure_genai(api_key):
     """Configure the Gemini AI API."""
@@ -23,7 +24,7 @@ def configure_genai(api_key):
     return genai.GenerativeModel('gemini-pro')
 
 
-def download_pdfs(url, headers, limit=1):
+def download_pdfs(url, headers, limit=5):
     """Download PDF files from the given URL."""
     try:
         response = requests.get(url, headers=headers)
@@ -195,7 +196,7 @@ dag = DAG(
     'gemini_analysis_dag',
     default_args=default_args,
     description='A DAG to analyze PDFs using Gemini API',
-    schedule_interval=timedelta(days=1),
+    schedule_interval=timedelta(minutes=5),
     catchup=False,
 )
 
@@ -239,27 +240,6 @@ def start():
     
     
 
-# Create the tasks
-# download_pdfs_dag = PythonOperator(
-#     task_id='download_pdfs',
-#     python_callable=download_pdfs_task,
-#     provide_context=True,
-#     dag=dag,
-# )
-
-# analyze_pdfs_dag = PythonOperator(
-#     task_id='analyze_pdfs',
-#     python_callable=analyze_pdfs_task,
-#     provide_context=True,
-#     dag=dag,
-# )
-
-# save_results_dag = PythonOperator(
-#     task_id='save_results',
-#     python_callable=save_results_task,
-#     provide_context=True,
-#     dag=dag,
-# )
 
 
 start_dag = PythonOperator(

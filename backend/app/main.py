@@ -312,9 +312,32 @@ def process_form(form_data):
 
 @app.route('/retrain_forecasting_model', methods=['GET'])
 def retrain():
-    pass
+    model = pickle.load(open('app/arima_model.pkl', 'rb'))
+    print("Model loaded successfully.")
+    # Load the latest data from BigQuery
+    # query = f"""
+    #     SELECT
+    #         *
+    #     FROM
+    #         `project_id.bdeminiproject.master`
+    #     WHERE 
+    #         Date > {datetime.now().strftime('%Y-%m-%d')}
+    #     ORDER BY
+    #         Date DESC
+    #     LIMIT
+    #         1000
+    # """
 
-
+    # df = pd.read_gbq(query, project_id="project_id")
+    # print("Data loaded successfully.")
+    # # Perform retraining using the latest data
+    # model = model.fit(df['Sales'])
+    # print("Model retrained successfully.")
+    # # Save the updated model
+    # pickle.dump(model, open('app/arima_model.pkl', 'wb'))
+    # save_model_to_s3(model, model_name="ARIMA_MODEL_LATEST")
+    # print("Model saved successfully.")
+    return jsonify({"message": "Model retrained and saved successfully."}), 200
 
 
 

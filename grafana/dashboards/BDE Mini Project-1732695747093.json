@@ -18,13 +18,13 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 2,
+  "id": 1,
   "links": [],
   "panels": [
     {
       "datasource": {
         "type": "grafana-bigquery-datasource",
-        "uid": "fe37atq8faps0a"
+        "uid": "ce51se64agmiob"
       },
       "fieldConfig": {
         "defaults": {
@@ -104,9 +104,9 @@
           "editorMode": "code",
           "format": 1,
           "location": "",
-          "project": "drilldown-439515",
+          "project": "project_id",
           "rawQuery": true,
-          "rawSql": "SELECT Lat, Lon FROM drilldown-439515.bdeminiproject.master LIMIT 5000\n",
+          "rawSql": "SELECT Lat, Lon FROM project_id.bdeminiproject.master LIMIT 5000\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -148,7 +148,7 @@
     {
       "datasource": {
         "type": "grafana-bigquery-datasource",
-        "uid": "fe37atq8faps0a"
+        "uid": "ce51se64agmiob"
       },
       "fieldConfig": {
         "defaults": {
@@ -234,9 +234,9 @@
           "editorMode": "code",
           "format": 1,
           "location": "",
-          "project": "drilldown-439515",
+          "project": "project_id",
           "rawQuery": true,
-          "rawSql": "SELECT \r\n  EXTRACT(HOUR FROM TIME(`Time Occ`)) AS time,\r\n  COUNT(*) AS occurrence_count\r\nFROM \r\n  `drilldown-439515.bdeminiproject.master`\r\nGROUP BY \r\n  time\r\nORDER BY \r\n  time;\r\n",
+          "rawSql": "SELECT \r\n  EXTRACT(HOUR FROM TIME(`Time Occ`)) AS time,\r\n  COUNT(*) AS occurrence_count\r\nFROM \r\n  `project_id.bdeminiproject.master`\r\nGROUP BY \r\n  time\r\nORDER BY \r\n  time;\r\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -263,7 +263,7 @@
     {
       "datasource": {
         "type": "grafana-bigquery-datasource",
-        "uid": "fe37atq8faps0a"
+        "uid": "ce51se64agmiob"
       },
       "fieldConfig": {
         "defaults": {
@@ -350,9 +350,9 @@
           "editorMode": "code",
           "format": 1,
           "location": "",
-          "project": "drilldown-439515",
+          "project": "project_id",
           "rawQuery": true,
-          "rawSql": "SELECT \n  CAST(`Date Occ` AS TIMESTAMP) AS time,\n  COUNT(*) AS occurrence_count\nFROM \n  `drilldown-439515.bdeminiproject.master`\nGROUP BY \n  time\nORDER BY \n  time;\n",
+          "rawSql": "SELECT \n  CAST(`Date Occ` AS TIMESTAMP) AS time,\n  COUNT(*) AS occurrence_count\nFROM \n  `project_id.bdeminiproject.master`\nGROUP BY \n  time\nORDER BY \n  time;\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -386,7 +386,7 @@
     {
       "datasource": {
         "type": "grafana-bigquery-datasource",
-        "uid": "fe37atq8faps0a"
+        "uid": "ce51se64agmiob"
       },
       "fieldConfig": {
         "defaults": {
@@ -444,9 +444,9 @@
           "editorMode": "code",
           "format": 1,
           "location": "",
-          "project": "drilldown-439515",
+          "project": "project_id",
           "rawQuery": true,
-          "rawSql": "SELECT \r\n  Count(*)\r\nFROM \r\n  `drilldown-439515.bdeminiproject.master`\r\n;\r\n",
+          "rawSql": "SELECT \r\n  Count(*)\r\nFROM \r\n  `project_id.bdeminiproject.master`\r\n;\r\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -473,7 +473,7 @@
     {
       "datasource": {
         "type": "grafana-bigquery-datasource",
-        "uid": "fe37atq8faps0a"
+        "uid": "ce51se64agmiob"
       },
       "fieldConfig": {
         "defaults": {
@@ -561,9 +561,9 @@
           "editorMode": "code",
           "format": 1,
           "location": "",
-          "project": "drilldown-439515",
+          "project": "project_id",
           "rawQuery": true,
-          "rawSql": "SELECT \n  `Vict Age`, \n  `Vict Sex`, \n  COUNT(*) AS `Victim Count`\nFROM \n  `drilldown-439515.bdeminiproject.master`\nWHERE \n  `Vict Age` IS NOT NULL \n  AND `Vict Age` > 0  -- Exclude invalid ages\n  AND `Vict Sex` IS NOT NULL  -- Ensure victim sex is available\nGROUP BY \n  `Vict Age`, \n  `Vict Sex`\nORDER BY \n  `Vict Age` ASC, \n  `Vict Sex` ASC;\n",
+          "rawSql": "SELECT \n  `Vict Age`, \n  `Vict Sex`, \n  COUNT(*) AS `Victim Count`\nFROM \n  `project_id.bdeminiproject.master`\nWHERE \n  `Vict Age` IS NOT NULL \n  AND `Vict Age` > 0  -- Exclude invalid ages\n  AND `Vict Sex` IS NOT NULL  -- Ensure victim sex is available\nGROUP BY \n  `Vict Age`, \n  `Vict Sex`\nORDER BY \n  `Vict Age` ASC, \n  `Vict Sex` ASC;\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -605,7 +605,7 @@
     {
       "datasource": {
         "type": "grafana-bigquery-datasource",
-        "uid": "fe37atq8faps0a"
+        "uid": "ce51se64agmiob"
       },
       "fieldConfig": {
         "defaults": {
@@ -688,9 +688,9 @@
           "editorMode": "code",
           "format": 1,
           "location": "",
-          "project": "drilldown-439515",
+          "project": "project_id",
           "rawQuery": true,
-          "rawSql": "SELECT \r\n  FORMAT_DATE('%A', `Date Occ`) AS day_of_week,\r\n  COUNT(*) AS occurrence_count\r\nFROM \r\n  `drilldown-439515.bdeminiproject.master`\r\nGROUP BY \r\n  day_of_week\r\nORDER BY \r\n  occurrence_count ASC ;\r\n",
+          "rawSql": "SELECT \r\n  FORMAT_DATE('%A', `Date Occ`) AS day_of_week,\r\n  COUNT(*) AS occurrence_count\r\nFROM \r\n  `project_id.bdeminiproject.master`\r\nGROUP BY \r\n  day_of_week\r\nORDER BY \r\n  occurrence_count ASC ;\r\n",
           "refId": "A",
           "sql": {
             "columns": [
@@ -729,6 +729,6 @@
   "timezone": "browser",
   "title": "BDE Mini Project",
   "uid": "ee2z0zjgfzh1cc",
-  "version": 8,
+  "version": 3,
   "weekStart": ""
 }

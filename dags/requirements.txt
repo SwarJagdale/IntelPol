@@ -10,3 +10,4 @@ PyPDF2
 openai
 protobuf==3.20.3
 beautifulsoup4
+python-dotenv

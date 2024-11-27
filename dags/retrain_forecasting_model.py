@@ -5,9 +5,11 @@ from datetime import datetime, timedelta
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 import telebot    
 import requests
+import os
+import dotenv
+dotenv.load_dotenv()
 
-
-bot = telebot.TeleBot("7190598149:AAFqya0tP0tF9wcn-EwpCzecDUwB_I_zqjg")
+bot = telebot.TeleBot(os.getenv("TELEGRAM_BOT_TOKEN"))
 
 
 
@@ -36,7 +38,7 @@ default_args = {
 with DAG(
     dag_id="incremental",
     default_args=default_args,
-    schedule_interval=timedelta(seconds=60*60*12),
+    schedule_interval=timedelta(seconds=60),
     catchup=False,
 ) as dag:
 
