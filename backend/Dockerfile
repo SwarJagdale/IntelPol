@@ -21,7 +21,15 @@ RUN pip install --upgrade pip setuptools wheel
 COPY app/requirements.txt .
 
 # Install dependencies from requirements.txt
-# Thlocaln
+RUN pip install -r requirements.txt
+
+# Copy wait-for-it script and make it executable
+COPY wait-for-it.sh /wait-for-it.sh
+RUN chmod +x /wait-for-it.sh
+
+# Copy the application code
+COPY app /app/app
+
 EXPOSE 8000
 
 # Run the Flask app

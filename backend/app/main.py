@@ -119,10 +119,13 @@ def upload_file():
 model_bucket_name = 'models'
 if not minio_client.bucket_exists(model_bucket_name):
     minio_client.make_bucket(model_bucket_name)
-    #upload arima_model.pkl to this as ARIMA_MODEL_LATEST 
+    #upload arima_model.pkl to this as ARIMA_MODEL_LATEST
     try:
-        minio_client.fput_object(model_bucket_name, "ARIMA_MODEL_LATEST", "arima_model.pkl")
-        print(f"Model uploaded successfully as ARIMA_MODEL_LATEST.")
+        if os.path.exists("arima_model.pkl"):
+            minio_client.fput_object(model_bucket_name, "ARIMA_MODEL_LATEST", "arima_model.pkl")
+            print(f"Model uploaded successfully as ARIMA_MODEL_LATEST.")
+        else:
+            print("arima_model.pkl not found, skipping initial model upload.")
     except S3Error as e:
         print(f"Error uploading model: {e}")
 
